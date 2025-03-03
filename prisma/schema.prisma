@@ -9,6 +9,66 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id               String            @id @default(uuid())
+  username         String            @unique
+  password         String
+  email            String            @unique
+  role             Role              @default(USER)
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  adoptionRequests AdoptionRequest[]
+}
+
+enum Role {
+  ADMIN
+  USER
+}
+
+model Cat {
+  id               String            @id @default(uuid())
+  name             String
+  description      String
+  imageUrl         String?
+  status           CatStatus         @default(AVAILABLE)
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  adoptionRequests AdoptionRequest[]
+}
+
+enum CatStatus {
+  AVAILABLE
+  PENDING
+  ADOPTED
+}
+
+model AdoptionRequest {
+  id           String        @id @default(uuid())
+  fullName     String
+  email        String
+  telephone    String
+  message      String
+  agreedToCare Boolean       @default(false)
+  status       RequestStatus @default(PENDING)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id])
+  catId  String
+  cat    Cat     @relation(fields: [catId], references: [id])
+
+  @@index([email])
+  @@index([userId, catId])
+}
+
+enum RequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
 }
